@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Pencil, Upload, Lock } from 'lucide-react';
+import { Pencil, Upload, Lock, Home } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from 'next/link';
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
@@ -189,8 +191,18 @@ export default function ProfilePage() {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Your Profile</h1>
-        <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/">
+              <Home className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Your Profile</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
+        </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">

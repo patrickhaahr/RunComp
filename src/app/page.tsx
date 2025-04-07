@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted/20 pt-6 pb-16">
       <div className="container mx-auto px-4">
-        <div className="fixed top-6 right-6 z-10">
+        <div className="flex justify-end mb-4">
           <ThemeToggle />
         </div>
         
