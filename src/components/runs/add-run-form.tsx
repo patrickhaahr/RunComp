@@ -47,7 +47,7 @@ export default function AddRunForm({ userId }: AddRunFormProps) {
     }
 
     // Add run to database
-    const { data, error: runError } = await addRun({
+    const { error: runError } = await addRun({
       user_id: userId,
       distance: distanceNum,
       time: totalSeconds,

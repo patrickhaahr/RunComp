@@ -22,7 +22,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { user, error } = await getCurrentUser();
+      const { user } = await getCurrentUser();
       setUser(user || null);
       setLoading(false);
     };

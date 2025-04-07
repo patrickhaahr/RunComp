@@ -21,7 +21,7 @@ export default function Home() {
             Running Competition
           </h1>
           <p className="text-muted-foreground max-w-xs mx-auto">
-            Who will go the distance? Track everyone's progress in our friendly competition.
+            Who will go the distance? Track everyone&apos;s progress in our friendly competition.
           </p>
         </div>
         

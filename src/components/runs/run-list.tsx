@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, ArrowUpDown, Trash2, Edit } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -207,7 +207,7 @@ export default function RunList({ userId }: RunListProps) {
   }
 
   if (!runs || runs.length === 0) {
-    return <div className="text-center py-4">You haven't recorded any runs yet.</div>;
+    return <div className="text-center py-4">You haven&apos;t recorded any runs yet.</div>;
   }
 
   return (
@@ -327,7 +327,7 @@ export default function RunList({ userId }: RunListProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="time">Time (e.g., "1h 20m 30s")</Label>
+              <Label htmlFor="time">Time (e.g., &quot;1h 20m 30s&quot;)</Label>
               <Input 
                 id="time" 
                 value={formTime} 

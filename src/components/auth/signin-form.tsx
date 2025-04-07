@@ -21,7 +21,7 @@ export default function SignInForm() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await signIn(email, password);
+    const { error } = await signIn(email, password);
 
     if (error) {
       setError(error.message);
@@ -71,7 +71,7 @@ export default function SignInForm() {
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
           <p className="text-sm text-center">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-primary hover:underline">
               Sign Up
             </Link>
