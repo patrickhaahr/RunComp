@@ -127,7 +127,7 @@ export default function AddRunForm({ userId }: AddRunFormProps) {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="pt-4">
           <Button type="submit" disabled={loading}>
             {loading ? 'Adding...' : 'Add Run'}
           </Button>

@@ -10,8 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Database types based on our schema
 export type Profile = {
   id: string;
-  name: string;
-  email: string;
+  name: string;  // User's display name
   profile_image?: string;
   created_at: string;
 };
@@ -61,6 +60,20 @@ export const getCurrentUser = async () => {
   return { user: data.user, error };
 };
 
+export const updateUserEmail = async (newEmail: string) => {
+  const { data, error } = await supabase.auth.updateUser({
+    email: newEmail,
+  });
+  return { data, error };
+};
+
+export const updateUserPassword = async (password: string) => {
+  const { data, error } = await supabase.auth.updateUser({
+    password,
+  });
+  return { data, error };
+};
+
 // Profile functions
 export const getProfile = async (userId: string) => {
   const { data, error } = await supabase
@@ -72,7 +85,7 @@ export const getProfile = async (userId: string) => {
   return { profile: data as Profile | null, error };
 };
 
-export const updateProfile = async (userId: string, updates: Partial<Profile>) => {
+export const updateProfile = async (userId: string, updates: Partial<Omit<Profile, 'id' | 'created_at'>>) => {
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -81,7 +94,7 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>) =
   return { data, error };
 };
 
-export const createProfile = async (profile: Omit<Profile, 'created_at'>) => {
+export const createProfile = async (profile: { id: string, name: string, profile_image?: string }) => {
   const { data, error } = await supabase
     .from('profiles')
     .insert([profile]);
@@ -106,6 +119,15 @@ export const addRun = async (run: Omit<Run, 'id' | 'created_at'>) => {
   const { data, error } = await supabase
     .from('runs')
     .insert([run]);
+  
+  return { data, error };
+};
+
+export const updateRun = async (runId: string, updates: Partial<Omit<Run, 'id' | 'user_id' | 'created_at'>>) => {
+  const { data, error } = await supabase
+    .from('runs')
+    .update(updates)
+    .eq('id', runId);
   
   return { data, error };
 };

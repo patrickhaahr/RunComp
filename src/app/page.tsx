@@ -27,9 +27,6 @@ export default function Home() {
         
         <RunningLeaderboard />
         
-        <footer className="mt-20 text-center text-xs text-muted-foreground">
-          <p>Updated every 24 hours • Last updated: {new Date().toLocaleDateString()}</p>
-        </footer>
       </div>
     </main>
   );

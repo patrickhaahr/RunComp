@@ -2,7 +2,6 @@
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) PRIMARY KEY,
     name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
     profile_image TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

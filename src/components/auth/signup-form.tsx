@@ -36,7 +36,6 @@ export default function SignUpForm() {
       const { error: profileError } = await createProfile({
         id: data.user.id,
         name,
-        email,
       });
 
       if (profileError) {
