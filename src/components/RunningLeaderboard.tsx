@@ -112,16 +112,16 @@ export const RunningLeaderboard = () => {
             <div className="flex flex-col items-center">
               <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-900 shadow-md">
                 {leaderboard[0].profile_image ? (
-                  <AvatarImage src={leaderboard[0].profile_image} alt={leaderboard[0].name} />
+                  <AvatarImage src={leaderboard[0].profile_image} alt={leaderboard[0].display_name} />
                 ) : (
-                  <AvatarFallback>{leaderboard[0].name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{leaderboard[0].display_name.charAt(0)}</AvatarFallback>
                 )}
               </Avatar>
               
               <div className="mt-3 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Trophy className="h-5 w-5 text-amber-500" />
-                  <h2 className="text-xl font-bold">{leaderboard[0].name}</h2>
+                  <h2 className="text-xl font-bold">{leaderboard[0].display_name}</h2>
                 </div>
                 <p className="text-sm text-muted-foreground">Leading the competition</p>
               </div>
@@ -167,14 +167,14 @@ export const RunningLeaderboard = () => {
               
               <Avatar className="h-10 w-10 border border-muted">
                 {runner.profile_image ? (
-                  <AvatarImage src={runner.profile_image} alt={runner.name} />
+                  <AvatarImage src={runner.profile_image} alt={runner.display_name} />
                 ) : (
-                  <AvatarFallback>{runner.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{runner.display_name.charAt(0)}</AvatarFallback>
                 )}
               </Avatar>
               
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{runner.name}</p>
+                <p className="font-medium truncate">{runner.display_name}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {runner.total_distance !== null ? runner.total_distance.toFixed(1) : "0"} km • {runner.total_runs || 0} runs
                   {runner.best_pace && ` • Best: ${formatPace(runner.best_pace)}`}

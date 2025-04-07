@@ -66,7 +66,7 @@ export default function SignInForm() {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex flex-col space-y-2 pt-6">
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>

@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 export default function SignUpForm() {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function SignUpForm() {
     setError(null);
 
     // Register user with Supabase auth
-    const { data, error: signUpError } = await signUp(email, password);
+    const { data, error: signUpError } = await signUp(email, password, displayName);
 
     if (signUpError) {
       setError(signUpError.message);
@@ -34,8 +34,7 @@ export default function SignUpForm() {
     if (data.user) {
       // Create profile record for the new user
       const { error: profileError } = await createProfile({
-        id: data.user.id,
-        name,
+        id: data.user.id
       });
 
       if (profileError) {
@@ -59,13 +58,13 @@ export default function SignUpForm() {
       <form onSubmit={handleSignUp}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="displayName">Display Name</Label>
             <Input
-              id="name"
+              id="displayName"
               type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="Your display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
               required
             />
           </div>
@@ -95,7 +94,7 @@ export default function SignUpForm() {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex flex-col space-y-2 pt-6">
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Creating Account...' : 'Sign Up'}
           </Button>

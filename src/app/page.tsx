@@ -13,12 +13,12 @@ export default function Home() {
           <div className="inline-block mb-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full p-0.5">
             <div className="bg-background rounded-full px-4 py-1">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500 font-medium">
-                Running Leaderboard
+                RunComp
               </span>
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-3">
-            Running Challenge
+            Running Competition
           </h1>
           <p className="text-muted-foreground max-w-xs mx-auto">
             Who will go the distance? Track everyone's progress in our friendly competition.
@@ -26,7 +26,7 @@ export default function Home() {
         </div>
         
         <RunningLeaderboard />
-        
+
       </div>
     </main>
   );

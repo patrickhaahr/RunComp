@@ -10,7 +10,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Database types based on our schema
 export type Profile = {
   id: string;
-  name: string;  // User's display name
   profile_image?: string;
   created_at: string;
 };
@@ -25,7 +24,7 @@ export type Run = {
 
 export type LeaderboardEntry = {
   user_id: string;
-  name: string;
+  display_name: string;
   profile_image?: string;
   total_distance: number;
   total_runs: number;
@@ -34,10 +33,15 @@ export type LeaderboardEntry = {
 };
 
 // Auth functions
-export const signUp = async (email: string, password: string) => {
+export const signUp = async (email: string, password: string, displayName: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        display_name: displayName
+      }
+    }
   });
   return { data, error };
 };
@@ -63,6 +67,15 @@ export const getCurrentUser = async () => {
 export const updateUserEmail = async (newEmail: string) => {
   const { data, error } = await supabase.auth.updateUser({
     email: newEmail,
+  });
+  return { data, error };
+};
+
+export const updateUserDisplayName = async (displayName: string) => {
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      display_name: displayName
+    }
   });
   return { data, error };
 };
@@ -94,7 +107,7 @@ export const updateProfile = async (userId: string, updates: Partial<Omit<Profil
   return { data, error };
 };
 
-export const createProfile = async (profile: { id: string, name: string, profile_image?: string }) => {
+export const createProfile = async (profile: { id: string, profile_image?: string }) => {
   const { data, error } = await supabase
     .from('profiles')
     .insert([profile]);

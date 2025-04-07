@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import AddRunForm from '@/components/runs/add-run-form';
 import RunList from '@/components/runs/run-list';
 import ProfileAvatar from '@/components/profile/profile-avatar';
-import { getProfile, Profile, signOut, updateProfile, updateUserEmail, updateUserPassword } from '@/lib/supabase';
+import { getProfile, Profile, signOut, updateProfile, updateUserEmail, updateUserPassword, updateUserDisplayName } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,7 +28,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [formName, setFormName] = useState('');
+  const [formDisplayName, setFormDisplayName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formConfirmPassword, setFormConfirmPassword] = useState('');
@@ -67,7 +67,7 @@ export default function ProfilePage() {
 
   const openEditDialog = () => {
     if (profile && user) {
-      setFormName(profile.name);
+      setFormDisplayName(user.user_metadata?.display_name || '');
       setFormEmail(user.email || '');
       setFormProfileImage(profile.profile_image || '');
       setFormPassword('');
@@ -86,10 +86,21 @@ export default function ProfilePage() {
     
     if (activeTab === 'profile') {
       // Simple validation for profile tab
-      if (!formName.trim() || !formEmail.trim()) {
-        setError('Name and email are required');
+      if (!formDisplayName.trim() || !formEmail.trim()) {
+        setError('Display name and email are required');
         setUpdating(false);
         return;
+      }
+      
+      // Update display name if changed
+      if (formDisplayName !== user.user_metadata?.display_name) {
+        const { error: displayNameError } = await updateUserDisplayName(formDisplayName);
+        
+        if (displayNameError) {
+          setError(displayNameError.message);
+          setUpdating(false);
+          return;
+        }
       }
       
       // Only update email if it has changed
@@ -103,9 +114,8 @@ export default function ProfilePage() {
         }
       }
       
-      // Update profile name and image
+      // Update profile image
       const { error: profileError } = await updateProfile(user.id, {
-        name: formName,
         profile_image: formProfileImage
       });
       
@@ -118,12 +128,11 @@ export default function ProfilePage() {
       // Update local state with new values
       setProfile({
         ...profile,
-        name: formName,
         profile_image: formProfileImage
       });
       
-      // Since we updated auth email, refresh the page to get updated user session
-      if (formEmail !== user.email) {
+      // Since we updated auth email or display name, refresh the page to get updated user session
+      if (formEmail !== user.email || formDisplayName !== user.user_metadata?.display_name) {
         setUpdating(false);
         setEditDialogOpen(false);
         router.refresh();
@@ -201,7 +210,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="flex items-center justify-between gap-6">
                 <div className="space-y-2">
-                  <p><span className="font-medium">Name:</span> {profile?.name}</p>
+                  <p><span className="font-medium">Name:</span> {user.user_metadata?.display_name}</p>
                   <p><span className="font-medium">Email:</span> {user?.email}</p>
                 </div>
                 <ProfileAvatar 
@@ -256,11 +265,11 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="displayName">Display Name</Label>
                   <Input 
-                    id="name" 
-                    value={formName} 
-                    onChange={(e) => setFormName(e.target.value)}
+                    id="displayName" 
+                    value={formDisplayName} 
+                    onChange={(e) => setFormDisplayName(e.target.value)}
                     disabled={updating}
                   />
                 </div>
