@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- use `bun` as package manager, NOT `npm` NOR `npx`
+- i use powershell
+- use this: `bunx --bun shadcn@latest add X` for installing shadcn ui components. 
