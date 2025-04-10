@@ -2,6 +2,9 @@
 
 A modern web application for tracking and competing in running activities with friends. Built with Next.js and Supabase.
 
+![home](https://github.com/user-attachments/assets/3e993f04-8f52-4885-bc2d-7b449cfcdd50)
+![profile](https://github.com/user-attachments/assets/b1ab1023-d264-4f49-9b57-fd3200bd6038)
+
 ## Features
 
 - 🏃‍♂️ Track running distance and time
