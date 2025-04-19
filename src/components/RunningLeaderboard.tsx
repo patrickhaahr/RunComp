@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { supabase, LeaderboardEntry } from "@/lib/supabase";
 import { useAuth } from "./auth/auth-provider";
 import { Button } from "./ui/button";
-import { ThemeToggle } from "./theme-toggle";
 import { LeaderboardView } from "./LeaderboardView";
 import { format, getWeek, startOfWeek, endOfWeek, add, getYear, differenceInCalendarYears, differenceInCalendarMonths, differenceInCalendarISOWeeks } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,7 +12,7 @@ import { Skeleton } from "./ui/skeleton";
 const leaderboardCache: Record<string, { data: LeaderboardEntry[]; timestamp: number }> = {};
 
 export const RunningLeaderboard = () => {
-  const { user } = useAuth();
+  const { } = useAuth();
   const [timeframe, setTimeframe] = useState<'all'|'year'|'month'|'week'>('all');
   const [offset, setOffset] = useState(0);
 
@@ -91,16 +89,6 @@ export const RunningLeaderboard = () => {
     
     fetchLeaderboard();
   }, [timeframe, offset]);
-
-  // Format pace helper function
-  const formatPace = (seconds: number) => {
-    if (!seconds) return null;
-    // Round to nearest second
-    const roundedSeconds = Math.round(seconds);
-    const minutes = Math.floor(roundedSeconds / 60);
-    const secs = roundedSeconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}/km`;
-  };
 
   if (loading) {
     return (
