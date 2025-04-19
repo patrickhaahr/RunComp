@@ -10,9 +10,10 @@ import { useRouter } from 'next/navigation';
 
 type AddRunFormProps = {
   userId: string;
+  onRunAdded?: () => void;
 };
 
-export default function AddRunForm({ userId }: AddRunFormProps) {
+export default function AddRunForm({ userId, onRunAdded }: AddRunFormProps) {
   const router = useRouter();
   const [distance, setDistance] = useState('');
   const [hours, setHours] = useState('');
@@ -65,6 +66,11 @@ export default function AddRunForm({ userId }: AddRunFormProps) {
     setMinutes('');
     setSeconds('');
     setLoading(false);
+    
+    // Notify parent component about the new run
+    if (onRunAdded) {
+      onRunAdded();
+    }
     
     // Refresh page to show new run
     router.refresh();

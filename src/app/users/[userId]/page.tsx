@@ -5,8 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
 
+export const revalidate = 120; // Cache this page for 2 minutes
+
 type Props = {
-  params: { userId: string };
+  params: Promise<{ userId: string }>;
 };
 
 function formatTime(seconds: number) {
@@ -23,7 +25,8 @@ function formatPace(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, "0")}/km`;
 }
 
-export default async function Page({ params: { userId } }: Props) {
+export default async function Page({ params }: Props) {
+  const { userId } = await params;
   const { leaderboard, error: lbError } = await getLeaderboard();
   if (lbError) {
     return (

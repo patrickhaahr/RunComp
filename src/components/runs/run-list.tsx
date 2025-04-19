@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getRuns, Run, deleteRun, updateRun } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,9 +50,10 @@ type SortOption = 'newest' | 'oldest' | 'distance' | 'pace';
 
 type RunListProps = {
   userId: string;
+  refreshTrigger?: number;
 };
 
-export default function RunList({ userId }: RunListProps) {
+export default function RunList({ userId, refreshTrigger = 0 }: RunListProps) {
   const router = useRouter();
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,22 +70,24 @@ export default function RunList({ userId }: RunListProps) {
   const [updating, setUpdating] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchRuns = async () => {
-      setLoading(true);
-      const { runs, error } = await getRuns(userId);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        setRuns(runs);
-      }
-      
-      setLoading(false);
-    };
+  // Extract fetchRuns to be called on demand
+  const fetchRuns = useCallback(async () => {
+    setLoading(true);
+    const { runs, error } = await getRuns(userId);
     
-    fetchRuns();
+    if (error) {
+      setError(error.message);
+    } else {
+      setRuns(runs);
+    }
+    
+    setLoading(false);
   }, [userId]);
+
+  // Fetch runs on mount and when refreshTrigger changes
+  useEffect(() => {
+    fetchRuns();
+  }, [fetchRuns, refreshTrigger]);
 
   const handleDelete = async (runId: string) => {
     if (confirm('Are you sure you want to delete this run?')) {

@@ -23,6 +23,7 @@ import { Pencil, Home } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runRefreshTrigger, setRunRefreshTrigger] = useState(0);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -178,11 +180,48 @@ export default function ProfilePage() {
     setFormProfileImage(base64Image);
   };
 
+  // Handler for when a new run is added
+  const handleRunAdded = () => {
+    // Increment the refresh trigger to cause the run list to update
+    setRunRefreshTrigger(prev => prev + 1);
+  };
+
   if (authLoading || loading || !user) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <p>Loading...</p>
+        {/* Header skeleton */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-6 w-6 rounded" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-6 rounded" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        </div>
+        {/* Main content skeleton */}
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-8">
+            {/* Profile card skeleton */}
+            <Skeleton className="h-48 w-full rounded-md" />
+            {/* Add run form skeleton */}
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-32" />
+            </div>
+          </div>
+          {/* Runs list skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -236,11 +275,11 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          <AddRunForm userId={user.id} />
+          <AddRunForm userId={user.id} onRunAdded={handleRunAdded} />
         </div>
 
         <div>
-          <RunList userId={user.id} />
+          <RunList userId={user.id} refreshTrigger={runRefreshTrigger} />
         </div>
       </div>
 

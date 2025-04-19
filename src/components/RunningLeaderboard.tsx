@@ -1,44 +1,96 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getLeaderboard, LeaderboardEntry } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
-import { Trophy, Medal, Activity } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { supabase, LeaderboardEntry } from "@/lib/supabase";
 import { useAuth } from "./auth/auth-provider";
 import { Button } from "./ui/button";
+import { ThemeToggle } from "./theme-toggle";
+import { LeaderboardView } from "./LeaderboardView";
+import { format, getWeek, startOfWeek, endOfWeek, add, getYear, differenceInCalendarYears, differenceInCalendarMonths, differenceInCalendarISOWeeks } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+
+const leaderboardCache: Record<string, { data: LeaderboardEntry[]; timestamp: number }> = {};
 
 export const RunningLeaderboard = () => {
   const { user } = useAuth();
+  const [timeframe, setTimeframe] = useState<'all'|'year'|'month'|'week'>('all');
+  const [offset, setOffset] = useState(0);
+
+  // The earliest data start date of the app
+  const startDate = new Date(2025, 3, 1); // April 1, 2025
+
+  // Compute how many periods back we can go for this timeframe
+  const maxOffset = (() => {
+    const now = new Date();
+    if (timeframe === 'year') return differenceInCalendarYears(now, startDate);
+    if (timeframe === 'month') return differenceInCalendarMonths(now, startDate);
+    if (timeframe === 'week') return differenceInCalendarISOWeeks(now, startDate);
+    return 0;
+  })();
+
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const noData = !leaderboard || leaderboard.length === 0;
+
+  // Compute human-friendly label for current timeframe
+  const getTimeframeLabel = () => {
+    const now = new Date();
+    switch (timeframe) {
+      case 'year':
+        return `Year: ${getYear(add(now, { years: -offset }))}`;
+      case 'month':
+        return format(add(now, { months: -offset }), 'LLLL yyyy');
+      case 'week': {
+        const dateRef = add(now, { weeks: -offset });
+        const weekNum = getWeek(dateRef, { weekStartsOn: 1 });
+        const start = startOfWeek(dateRef, { weekStartsOn: 1 });
+        const end = endOfWeek(dateRef, { weekStartsOn: 1 });
+        return `Week ${weekNum}: ${format(start, 'd')}–${format(end, 'd MMM')}`;
+      }
+      default:
+        return 'All Time';
+    }
+  };
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
-      const { leaderboard, error } = await getLeaderboard();
+      setError(null);
+      // Try cache first
+      const cacheKey = `${timeframe}_${offset}`;
+      const nowTs = Date.now();
+      const cached = leaderboardCache[cacheKey];
+      if (cached && nowTs - cached.timestamp < 2 * 60 * 1000) {
+        setLeaderboard(cached.data);
+        setLoading(false);
+        return;
+      }
+      // Fetch via RPC for arbitrary period
+      const { data, error } = await supabase.rpc('get_leaderboard_period', { period: timeframe, period_offset: offset });
       
       if (error) {
         setError(error.message);
       } else {
-        // Sort the leaderboard by total_distance (treating null as 0)
-        const sortedLeaderboard = [...(leaderboard || [])].sort((a, b) => {
-          const distanceA = a.total_distance === null ? 0 : a.total_distance;
-          const distanceB = b.total_distance === null ? 0 : b.total_distance;
-          return distanceB - distanceA; // Sort by descending order
+        const sortedLeaderboard = [...(data || [])].sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+          const distanceA = a.total_distance ?? 0;
+          const distanceB = b.total_distance ?? 0;
+          return distanceB - distanceA;
         });
-        setLeaderboard(sortedLeaderboard);
+        // Filter out users with zero runs
+        const filteredLeaderboard = sortedLeaderboard.filter(entry => entry.total_runs > 0);
+        // Cache for 2 minutes
+        leaderboardCache[cacheKey] = { data: filteredLeaderboard, timestamp: nowTs };
+        setLeaderboard(filteredLeaderboard);
       }
       
       setLoading(false);
     };
     
     fetchLeaderboard();
-  }, []);
+  }, [timeframe, offset]);
 
   // Format pace helper function
   const formatPace = (seconds: number) => {
@@ -52,8 +104,36 @@ export const RunningLeaderboard = () => {
 
   if (loading) {
     return (
-      <div className="w-full max-w-3xl mx-auto py-12 text-center">
-        <p>Loading leaderboard...</p>
+      <div className="w-full max-w-3xl mx-auto space-y-6">
+        {/* Unified control row skeleton */}
+        <div className="flex justify-between items-center gap-2 mb-6">
+          {/* Empty space on left */}
+          <div className="w-4"></div>
+          
+          {/* Timeframe selector skeletons in CENTER */}
+          <div className="flex justify-center items-center gap-1">
+            {['all', 'year', 'month', 'week'].map((_, idx) => (
+              <Skeleton key={idx} className="h-8 w-20" />
+            ))}
+          </div>
+          
+          {/* Navigation button skeletons on RIGHT */}
+          <div className="flex items-center gap-1">
+            {timeframe !== 'all' && (
+              <>
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
+              </>
+            )}
+          </div>
+        </div>
+        
+        {/* Leaderboard entries skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Skeleton key={idx} className="h-20 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -66,152 +146,72 @@ export const RunningLeaderboard = () => {
     );
   }
 
-  if (!leaderboard || leaderboard.length === 0) {
-    return (
-      <div className="w-full max-w-3xl mx-auto py-12 text-center">
-        <p className="mb-4">No runs recorded yet. Be the first!</p>
-        {user ? (
-          <Button asChild>
-            <Link href="/profile">Add Your Run</Link>
-          </Button>
-        ) : (
-          <Button asChild>
-            <Link href="/signin">Sign In to Participate</Link>
-          </Button>
-        )}
-      </div>
-    );
-  }
-  
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
-      {/* Header with auth state */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold">Running Leaderboard</h1>
-        {user ? (
-          <Button asChild>
-            <Link href="/profile">Your Profile</Link>
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href="/signin">Sign In</Link>
+      {/* Control row with timeframe selectors centered and navigation on right */}
+      <div className="flex justify-between items-center gap-2 mb-6">
+        {/* Empty space on left for balance */}
+        <div className="w-16"></div>
+        
+        {/* Timeframe selectors in CENTER */}
+        <div className="flex justify-center items-center gap-1">
+          {[
+            { value: 'all', label: 'All Time' },
+            { value: 'year', label: 'Year' },
+            { value: 'month', label: 'Month' },
+            { value: 'week', label: 'Week' },
+          ].map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={timeframe === value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeframe(value as 'all'|'year'|'month'|'week')}
+              aria-pressed={timeframe === value}
+            >
+              {label}
             </Button>
-            <Button asChild>
-              <Link href="/signup">Sign Up</Link>
-            </Button>
-          </div>
-        )}
+          ))}
+        </div>
+        
+        {/* Navigation buttons on RIGHT */}
+        <div className="flex items-center gap-1 min-w-16 justify-end">
+          {timeframe !== 'all' && maxOffset > 0 && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setOffset(o => Math.min(maxOffset, o + 1))}
+                disabled={offset >= maxOffset}
+                aria-label="Previous period"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setOffset(o => Math.max(0, o - 1))}
+                disabled={offset <= 0}
+                aria-label="Next period"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Champion card */}
-      {leaderboard.length > 0 && (
-        <Link
-          href={`/users/${leaderboard[0].user_id}`}
-          className="block"
-          aria-label={`View ${leaderboard[0].display_name}'s stats`}
-        >
-          <Card className="overflow-hidden border-0 shadow-lg">
-            <div className="bg-gradient-to-r from-amber-500 to-yellow-400 h-16" />
-            <CardContent className="p-6 pt-0 -mt-8">
-              <div className="flex flex-col items-center">
-                <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-900 shadow-md">
-                  {leaderboard[0].profile_image ? (
-                    <AvatarImage src={leaderboard[0].profile_image} alt={leaderboard[0].display_name} />
-                  ) : (
-                    <AvatarFallback>{leaderboard[0].display_name.charAt(0)}</AvatarFallback>
-                  )}
-                </Avatar>
-                
-                <div className="mt-3 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Trophy className="h-5 w-5 text-amber-500" />
-                    <h2 className="text-xl font-bold">{leaderboard[0].display_name}</h2>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Leading the competition</p>
-                </div>
-                
-                <div className="flex gap-3 mt-4 flex-wrap justify-center">
-                  <Badge variant="outline" className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                    <Activity className="h-3.5 w-3.5 mr-1.5" />
-                    {leaderboard[0].total_distance !== null ? leaderboard[0].total_distance.toFixed(1) : "0"} km
-                  </Badge>
-                  
-                  <Badge variant="outline" className="px-3 py-1">
-                    {leaderboard[0].total_runs || 0} runs
-                  </Badge>
-
-                  {leaderboard[0].best_pace && (
-                    <Badge variant="outline" className="px-3 py-1">
-                      Best pace: {formatPace(leaderboard[0].best_pace)}
-                    </Badge>
-                  )}
-                  
-                  {leaderboard[0].avg_pace && (
-                    <Badge variant="outline" className="px-3 py-1">
-                      Avg pace: {formatPace(leaderboard[0].avg_pace)}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+      {/* Leaderboard display */}
+      {noData ? (
+        <div className="w-full max-w-3xl mx-auto py-12 text-center">
+          <p className="mb-4">No runs recorded</p>
+        </div>
+      ) : (
+        <LeaderboardView 
+          entries={leaderboard!} 
+          label={getTimeframeLabel()} 
+          isFinished={offset > 0} 
+        />
       )}
-      
-      {/* Runners up list */}
-      <div className="space-y-2">
-        {leaderboard.slice(1).map((runner, index) => (
-          <Link
-            key={runner.user_id}
-            href={`/users/${runner.user_id}`}
-            className="block transition-all hover:shadow"
-            aria-label={`View ${runner.display_name}'s stats`}
-          >
-            <Card className={cn(
-              "border-0",
-              index === 0 && "border-l-4 border-l-gray-300 dark:border-l-gray-600"
-            )}>
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-medium">
-                  {index + 2}
-                </div>
-                
-                <Avatar className="h-10 w-10 border border-muted">
-                  {runner.profile_image ? (
-                    <AvatarImage src={runner.profile_image} alt={runner.display_name} />
-                  ) : (
-                    <AvatarFallback>{runner.display_name.charAt(0)}</AvatarFallback>
-                  )}
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{runner.display_name}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {runner.total_distance !== null ? runner.total_distance.toFixed(1) : "0"} km • {runner.total_runs || 0} runs
-                    {runner.best_pace && ` • Best: ${formatPace(runner.best_pace)}`}
-                    {runner.avg_pace && ` • Avg: ${formatPace(runner.avg_pace)}`}
-                  </p>
-                </div>
-                
-                {index === 0 && (
-                  <Badge variant="secondary" className="hidden sm:flex gap-1 items-center">
-                    <Medal className="h-3 w-3" />
-                    <span>Silver</span>
-                  </Badge>
-                )}
-                
-                {index === 1 && (
-                  <Badge variant="secondary" className="hidden sm:flex gap-1 items-center text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950 hover:bg-amber-100 dark:hover:bg-amber-900">
-                    <Medal className="h-3 w-3" />
-                    <span>Bronze</span>
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }; 

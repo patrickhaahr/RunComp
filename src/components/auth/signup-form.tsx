@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { Home } from 'lucide-react';
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -50,7 +51,17 @@ export default function SignUpForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto relative">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="absolute top-2 right-2" 
+        asChild
+      >
+        <Link href="/" aria-label="Back to Home">
+          <Home className="h-4 w-4" />
+        </Link>
+      </Button>
       <CardHeader>
         <CardTitle>Sign Up</CardTitle>
         <CardDescription>Create a new account to track your runs</CardDescription>
@@ -101,7 +112,7 @@ export default function SignUpForm() {
           <p className="text-sm text-center">
             Already have an account?{' '}
             <Link href="/signin" className="text-primary hover:underline">
-              Sign In
+              Login
             </Link>
           </p>
         </CardFooter>
