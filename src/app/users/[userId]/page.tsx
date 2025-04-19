@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
+import { Activity, Home } from "lucide-react";
 
 export const revalidate = 120; // Cache this page for 2 minutes
 
@@ -60,8 +60,8 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="w-full max-w-3xl mx-auto py-8 space-y-6">
-      <Link href="/" className="inline-block text-sm text-primary hover:underline" aria-label="Back to Leaderboard">
-        ← Back to Leaderboard
+      <Link href="/" className="flex items-center gap-1 text-sm text-primary hover:underline" aria-label="Back to Leaderboard">
+        ← <Home className="h-4 w-4" />
       </Link>
 
       <Card className="p-4">
