@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
 const leaderboardCache: Record<string, { data: LeaderboardEntry[]; timestamp: number }> = {};
+const CACHE_TIME = 2 * 60 * 1000; // 2 minutes in milliseconds
 
 export const RunningLeaderboard = () => {
   const { } = useAuth();
@@ -30,6 +31,7 @@ export const RunningLeaderboard = () => {
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prefetching, setPrefetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const noData = !leaderboard || leaderboard.length === 0;
 
@@ -53,42 +55,110 @@ export const RunningLeaderboard = () => {
     }
   };
 
+  // Fetch leaderboard data for a specific timeframe and offset
+  const fetchLeaderboardData = async (period: 'all'|'year'|'month'|'week', periodOffset: number) => {
+    const cacheKey = `${period}_${periodOffset}`;
+    const nowTs = Date.now();
+    const cached = leaderboardCache[cacheKey];
+    
+    // Return cached data if it exists and is still valid
+    if (cached && nowTs - cached.timestamp < CACHE_TIME) {
+      return cached.data;
+    }
+    
+    // Fetch via RPC for arbitrary period
+    const { data, error } = await supabase.rpc('get_leaderboard_period', { 
+      period: period, 
+      period_offset: periodOffset 
+    });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    const sortedLeaderboard = [...(data || [])].sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+      const distanceA = a.total_distance ?? 0;
+      const distanceB = b.total_distance ?? 0;
+      return distanceB - distanceA;
+    });
+    
+    // Filter out users with zero runs
+    const filteredLeaderboard = sortedLeaderboard.filter(entry => entry.total_runs > 0);
+    
+    // Cache for 2 minutes
+    leaderboardCache[cacheKey] = { data: filteredLeaderboard, timestamp: nowTs };
+    
+    return filteredLeaderboard;
+  };
+
+  // Prefetch all timeframes with offset 0
+  const prefetchTimeframes = async () => {
+    const timeframes: Array<'all'|'year'|'month'|'week'> = ['all', 'year', 'month', 'week'];
+    setPrefetching(true);
+    
+    try {
+      await Promise.all(
+        timeframes.map(period => 
+          fetchLeaderboardData(period, 0)
+        )
+      );
+    } catch (e) {
+      console.error("Error prefetching timeframes:", e);
+    } finally {
+      setPrefetching(false);
+    }
+  };
+
+  // Main effect to load the current timeframe data
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const loadCurrentTimeframe = async () => {
       setLoading(true);
       setError(null);
-      // Try cache first
-      const cacheKey = `${timeframe}_${offset}`;
-      const nowTs = Date.now();
-      const cached = leaderboardCache[cacheKey];
-      if (cached && nowTs - cached.timestamp < 2 * 60 * 1000) {
-        setLeaderboard(cached.data);
+      
+      try {
+        const data = await fetchLeaderboardData(timeframe, offset);
+        setLeaderboard(data);
+      } catch (e) {
+        if (e instanceof Error) {
+          setError(e.message);
+        } else {
+          setError("An unknown error occurred");
+        }
+      } finally {
         setLoading(false);
-        return;
       }
-      // Fetch via RPC for arbitrary period
-      const { data, error } = await supabase.rpc('get_leaderboard_period', { period: timeframe, period_offset: offset });
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        const sortedLeaderboard = [...(data || [])].sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-          const distanceA = a.total_distance ?? 0;
-          const distanceB = b.total_distance ?? 0;
-          return distanceB - distanceA;
-        });
-        // Filter out users with zero runs
-        const filteredLeaderboard = sortedLeaderboard.filter(entry => entry.total_runs > 0);
-        // Cache for 2 minutes
-        leaderboardCache[cacheKey] = { data: filteredLeaderboard, timestamp: nowTs };
-        setLeaderboard(filteredLeaderboard);
-      }
-      
-      setLoading(false);
     };
     
-    fetchLeaderboard();
+    loadCurrentTimeframe();
   }, [timeframe, offset]);
+
+  // Initial prefetch effect runs once on mount
+  useEffect(() => {
+    prefetchTimeframes();
+  }, []);
+
+  // When user changes timeframe, prefetch next/prev offsets
+  useEffect(() => {
+    if (timeframe !== 'all') {
+      const prefetchAdjacentOffsets = async () => {
+        try {
+          // Prefetch next offset if available
+          if (offset > 0) {
+            await fetchLeaderboardData(timeframe, offset - 1);
+          }
+          
+          // Prefetch previous offset if available
+          if (offset < maxOffset) {
+            await fetchLeaderboardData(timeframe, offset + 1);
+          }
+        } catch (e) {
+          console.error("Error prefetching adjacent offsets:", e);
+        }
+      };
+      
+      prefetchAdjacentOffsets();
+    }
+  }, [timeframe, offset, maxOffset]);
 
   if (loading) {
     return (
@@ -155,6 +225,7 @@ export const RunningLeaderboard = () => {
               size="sm"
               onClick={() => setTimeframe(value as 'all'|'year'|'month'|'week')}
               aria-pressed={timeframe === value}
+              disabled={prefetching}
             >
               {label}
             </Button>
@@ -169,7 +240,7 @@ export const RunningLeaderboard = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setOffset(o => Math.min(maxOffset, o + 1))}
-                disabled={offset >= maxOffset}
+                disabled={offset >= maxOffset || prefetching}
                 aria-label="Previous period"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -178,7 +249,7 @@ export const RunningLeaderboard = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setOffset(o => Math.max(0, o - 1))}
-                disabled={offset <= 0}
+                disabled={offset <= 0 || prefetching}
                 aria-label="Next period"
               >
                 <ChevronRight className="h-4 w-4" />
