@@ -106,97 +106,110 @@ export const RunningLeaderboard = () => {
 
       {/* Champion card */}
       {leaderboard.length > 0 && (
-        <Card className="overflow-hidden border-0 shadow-lg">
-          <div className="bg-gradient-to-r from-amber-500 to-yellow-400 h-16" />
-          <CardContent className="p-6 pt-0 -mt-8">
-            <div className="flex flex-col items-center">
-              <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-900 shadow-md">
-                {leaderboard[0].profile_image ? (
-                  <AvatarImage src={leaderboard[0].profile_image} alt={leaderboard[0].display_name} />
-                ) : (
-                  <AvatarFallback>{leaderboard[0].display_name.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
-              
-              <div className="mt-3 text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Trophy className="h-5 w-5 text-amber-500" />
-                  <h2 className="text-xl font-bold">{leaderboard[0].display_name}</h2>
+        <Link
+          href={`/users/${leaderboard[0].user_id}`}
+          className="block"
+          aria-label={`View ${leaderboard[0].display_name}'s stats`}
+        >
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <div className="bg-gradient-to-r from-amber-500 to-yellow-400 h-16" />
+            <CardContent className="p-6 pt-0 -mt-8">
+              <div className="flex flex-col items-center">
+                <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-900 shadow-md">
+                  {leaderboard[0].profile_image ? (
+                    <AvatarImage src={leaderboard[0].profile_image} alt={leaderboard[0].display_name} />
+                  ) : (
+                    <AvatarFallback>{leaderboard[0].display_name.charAt(0)}</AvatarFallback>
+                  )}
+                </Avatar>
+                
+                <div className="mt-3 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <h2 className="text-xl font-bold">{leaderboard[0].display_name}</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Leading the competition</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Leading the competition</p>
-              </div>
-              
-              <div className="flex gap-3 mt-4 flex-wrap justify-center">
-                <Badge variant="outline" className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                  <Activity className="h-3.5 w-3.5 mr-1.5" />
-                  {leaderboard[0].total_distance !== null ? leaderboard[0].total_distance.toFixed(1) : "0"} km
-                </Badge>
                 
-                <Badge variant="outline" className="px-3 py-1">
-                  {leaderboard[0].total_runs || 0} runs
-                </Badge>
+                <div className="flex gap-3 mt-4 flex-wrap justify-center">
+                  <Badge variant="outline" className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                    <Activity className="h-3.5 w-3.5 mr-1.5" />
+                    {leaderboard[0].total_distance !== null ? leaderboard[0].total_distance.toFixed(1) : "0"} km
+                  </Badge>
+                  
+                  <Badge variant="outline" className="px-3 py-1">
+                    {leaderboard[0].total_runs || 0} runs
+                  </Badge>
 
-                {leaderboard[0].best_pace && (
-                  <Badge variant="outline" className="px-3 py-1">
-                    Best pace: {formatPace(leaderboard[0].best_pace)}
-                  </Badge>
-                )}
-                
-                {leaderboard[0].avg_pace && (
-                  <Badge variant="outline" className="px-3 py-1">
-                    Avg pace: {formatPace(leaderboard[0].avg_pace)}
-                  </Badge>
-                )}
+                  {leaderboard[0].best_pace && (
+                    <Badge variant="outline" className="px-3 py-1">
+                      Best pace: {formatPace(leaderboard[0].best_pace)}
+                    </Badge>
+                  )}
+                  
+                  {leaderboard[0].avg_pace && (
+                    <Badge variant="outline" className="px-3 py-1">
+                      Avg pace: {formatPace(leaderboard[0].avg_pace)}
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       )}
       
       {/* Runners up list */}
       <div className="space-y-2">
         {leaderboard.slice(1).map((runner, index) => (
-          <Card key={runner.user_id} className={cn(
-            "transition-all hover:shadow",
-            index === 0 && "border-l-4 border-l-gray-300 dark:border-l-gray-600"
-          )}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-medium">
-                {index + 2}
-              </div>
-              
-              <Avatar className="h-10 w-10 border border-muted">
-                {runner.profile_image ? (
-                  <AvatarImage src={runner.profile_image} alt={runner.display_name} />
-                ) : (
-                  <AvatarFallback>{runner.display_name.charAt(0)}</AvatarFallback>
+          <Link
+            key={runner.user_id}
+            href={`/users/${runner.user_id}`}
+            className="block transition-all hover:shadow"
+            aria-label={`View ${runner.display_name}'s stats`}
+          >
+            <Card className={cn(
+              "border-0",
+              index === 0 && "border-l-4 border-l-gray-300 dark:border-l-gray-600"
+            )}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-medium">
+                  {index + 2}
+                </div>
+                
+                <Avatar className="h-10 w-10 border border-muted">
+                  {runner.profile_image ? (
+                    <AvatarImage src={runner.profile_image} alt={runner.display_name} />
+                  ) : (
+                    <AvatarFallback>{runner.display_name.charAt(0)}</AvatarFallback>
+                  )}
+                </Avatar>
+                
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{runner.display_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {runner.total_distance !== null ? runner.total_distance.toFixed(1) : "0"} km • {runner.total_runs || 0} runs
+                    {runner.best_pace && ` • Best: ${formatPace(runner.best_pace)}`}
+                    {runner.avg_pace && ` • Avg: ${formatPace(runner.avg_pace)}`}
+                  </p>
+                </div>
+                
+                {index === 0 && (
+                  <Badge variant="secondary" className="hidden sm:flex gap-1 items-center">
+                    <Medal className="h-3 w-3" />
+                    <span>Silver</span>
+                  </Badge>
                 )}
-              </Avatar>
-              
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{runner.display_name}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {runner.total_distance !== null ? runner.total_distance.toFixed(1) : "0"} km • {runner.total_runs || 0} runs
-                  {runner.best_pace && ` • Best: ${formatPace(runner.best_pace)}`}
-                  {runner.avg_pace && ` • Avg: ${formatPace(runner.avg_pace)}`}
-                </p>
-              </div>
-              
-              {index === 0 && (
-                <Badge variant="secondary" className="hidden sm:flex gap-1 items-center">
-                  <Medal className="h-3 w-3" />
-                  <span>Silver</span>
-                </Badge>
-              )}
-              
-              {index === 1 && (
-                <Badge variant="secondary" className="hidden sm:flex gap-1 items-center text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950 hover:bg-amber-100 dark:hover:bg-amber-900">
-                  <Medal className="h-3 w-3" />
-                  <span>Bronze</span>
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
+                
+                {index === 1 && (
+                  <Badge variant="secondary" className="hidden sm:flex gap-1 items-center text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950 hover:bg-amber-100 dark:hover:bg-amber-900">
+                    <Medal className="h-3 w-3" />
+                    <span>Bronze</span>
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
